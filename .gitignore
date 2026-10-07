@@ -1,0 +1,25 @@
+# Build
+build/
+cmake-build-*/
+
+# Compiled binaries
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+*.exe
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+
+# IDE
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
