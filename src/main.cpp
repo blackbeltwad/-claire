@@ -1,3 +1,4 @@
+#include "main_flow.h"
 #include <fstream>
 #include <iostream>
 
@@ -24,4 +25,8 @@ int main(int argc, char *argv[]) {
   }
 
   std::cout << source;
+  if (!tokenize(&source)) {
+    std::cerr << "Tokenization Failed \n";
+    return 1;
+  }
 }

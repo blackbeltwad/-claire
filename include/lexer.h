@@ -22,6 +22,7 @@ enum class token_type {
   R_BRACKET,
   EQUAL,
   OPERATOR,
+  SINGLE_QUOTE
 };
 
 struct token {
@@ -39,6 +40,7 @@ static std::unordered_map<std::string, token_type> keyvalues{
     {"-", token_type::OPERATOR},      {"1", token_type::INTEGER},
     {"a", token_type::STRING},        {"-", token_type::OPERATOR},
     {"*", token_type::OPERATOR},      {"/", token_type::OPERATOR},
+    {"`", token_type::SINGLE_QUOTE}
 
 };
 
