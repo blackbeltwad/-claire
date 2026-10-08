@@ -20,6 +20,13 @@ compile_commands.json
 # IDE
 .vscode/
 .idea/
+# Ignore local VS Code tool configurations and caches
+.vscode-ctools/
+.workspace/
+
+# Caches and Temporary Files
+.cache/
 
 # macOS
 .DS_Store
+
