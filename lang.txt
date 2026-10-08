@@ -1,29 +1,19 @@
-fn name(type x, type y){
-  ?? Regular function
+fn name(int x, int y){
   let ans = x + y
   release ans
 }
 
 spell do() {
-  ?? Compile time function
-  release 120320402105 x 10938018503
-  
+  release 120320402105  * 10938018503
 }
+
 fn main(){
   let x = 4
   let b = 10
   
-  ?? Invoke is how you call functions
-  let done = x + b + invoke name(2,3)
+  let done = x + b + name(2,3)
 
   let z = invoke do()
 }
 
-?? Other ideas
 
-?? Comments
-?? enchant<int> or enchant() for casting
-?? Invoke will mean execute
-?? release fancy for return
-?? Im gonna lean into metaprogramming for -claire, or Eclair, idk what ill name it
-?? compiler metaprogramming will be refered to as the spell system instead of that fancy ass word
