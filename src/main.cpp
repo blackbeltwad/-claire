@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
   std::cout << source;
   std::vector<eclaire::token> tokens;
   if (!eclaire::tokenize(source, tokens)) {
-    std::cerr << "Tokenization Failed \n";
+    std::cerr << "Error: tokenization has failed \n";
     return 1;
   }
 }

@@ -3,6 +3,6 @@
 #include "lexer.h"
 #include <string>
 namespace eclaire {
-bool tokenize(const std::string &source, std::vector<eclaire::token> &tokens);
-}
+bool tokenize(const std::string &source, std::vector<token> &tokens);
+} // namespace eclaire
 #endif

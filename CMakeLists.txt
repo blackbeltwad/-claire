@@ -9,6 +9,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_executable(claire
   src/main.cpp
   src/frontend/lexer.cpp
+  src/frontend/parser.cpp
 )
 
 target_include_directories(claire PRIVATE include)
