@@ -1,3 +1,4 @@
+#include "lexer.h"
 #include "main_flow.h"
 #include <fstream>
 #include <iostream>
@@ -25,7 +26,8 @@ int main(int argc, char *argv[]) {
   }
 
   std::cout << source;
-  if (!tokenize(&source)) {
+  std::vector<eclaire::token> tokens;
+  if (!eclaire::tokenize(source, tokens)) {
     std::cerr << "Tokenization Failed \n";
     return 1;
   }
