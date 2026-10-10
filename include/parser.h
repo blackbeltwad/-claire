@@ -1,128 +1,124 @@
-#ifndef PARSER_H
-#define PARSER_H
-
-#include "lexer.h"
+#ifndef ECLAIRE_PARSER_H
+#define ECLAIRE_PARSER_H
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
+
 namespace eclaire {
 
-class ast_node {
-public:
-  virtual ~ast_node() = default;
+enum class kind {
+  integer,
+  variable,
+  binary,
+  call,
+  invoke,
+  let,
+  assign,
+  release,
+  if_stmt,
+  while_stmt,
+  expr_stmt,
+  function
 };
 
-class expression : public ast_node {
-public:
-  virtual ~expression() = default;
+enum class binary_op { add, sub, mul, div, eq, ne, lt, le, gt, ge };
+
+struct ast_node {
+  explicit ast_node(kind k) : node_kind(k) {}
+  virtual ~ast_node() = default;
+  kind node_kind;
+};
+
+struct expression : ast_node {
+  using ast_node::ast_node;
+};
+struct statement : ast_node {
+  using ast_node::ast_node;
+};
+
+using expr_ptr = std::unique_ptr<expression>;
+using stmt_ptr = std::unique_ptr<statement>;
+using block = std::vector<stmt_ptr>;
+
+struct integer_expr : expression {
+  integer_expr() : expression(kind::integer) {}
+  std::int64_t value = 0;
+};
+
+struct variable_expr : expression {
+  variable_expr() : expression(kind::variable) {}
+  std::string name;
+};
+
+struct binary_expr : expression {
+  binary_expr() : expression(kind::binary) {}
+  binary_op op = binary_op::add;
+  expr_ptr left, right;
+};
+
+struct call_expr : expression {
+  call_expr() : expression(kind::call) {}
+  std::string name;
+  std::vector<expr_ptr> arguments;
+};
+
+struct invoke_expr : expression {
+  invoke_expr() : expression(kind::invoke) {}
+  std::unique_ptr<call_expr> call;
+};
+
+struct let_stmt : statement {
+  let_stmt() : statement(kind::let) {}
+  std::string name;
+  expr_ptr value;
+};
+
+struct assign_stmt : statement {
+  assign_stmt() : statement(kind::assign) {}
+  std::string name;
+  expr_ptr value;
+};
+
+struct release_stmt : statement {
+  release_stmt() : statement(kind::release) {}
+  expr_ptr value;
+};
+
+struct expr_stmt : statement {
+  expr_stmt() : statement(kind::expr_stmt) {}
+  expr_ptr value;
+};
+
+struct branch {
+  expr_ptr condition;
+  block body;
+};
+
+struct if_stmt : statement {
+  if_stmt() : statement(kind::if_stmt) {}
+  std::vector<branch> branches;
+  block else_body;
+};
+
+struct while_stmt : statement {
+  while_stmt() : statement(kind::while_stmt) {}
+  expr_ptr condition;
+  block body;
 };
 
 struct parameter {
-  std::string type;
+  std::string type, name;
+};
+
+struct function_node : ast_node {
+  function_node() : ast_node(kind::function) {}
   std::string name;
+  std::vector<parameter> parameters;
+  block body;
+  bool is_spell = false;
 };
 
-class function_node : public ast_node {
-public:
-  std::string name;
-  std::vector<std::unique_ptr<parameter>> parameters;
-  std::vector<std::unique_ptr<ast_node>> body_nodes;
-};
-
-class let_node : public ast_node {
-public:
-  std::string name;
-  std::unique_ptr<expression> value;
-};
-
-class release_node : public ast_node {
-public:
-  std::unique_ptr<expression> value;
-};
-
-class function_call_node : public expression {
-public:
-  std::string name;
-  std::vector<std::unique_ptr<expression>> arguments;
-};
-
-class integer_expr : public expression {
-public:
-  int value;
-};
-
-class variable_expr : public expression {
-public:
-  std::string name;
-};
-
-class binary_expr : public expression {
-public:
-  std::unique_ptr<expression> left;
-  std::unique_ptr<expression> right;
-  std::string op;
-};
-
-class parser {
-private:
-  const std::vector<token> &tokens;
-  std::size_t count;
-
-  void advance() { count++; }
-
-  std::unique_ptr<parameter> consume_type_identifier() {
-    auto unique_parameter = std::make_unique<parameter>();
-    unique_parameter->type = tokens[count].text;
-    advance(); // Consume type
-    unique_parameter->name = tokens[count].text;
-    return unique_parameter;
-  }
-
-  void consume_name(function_node &fn_node) {
-    fn_node.name = tokens[count].text;
-    advance();
-  }
-
-  void consume_name(std::unique_ptr<let_node> &l_node) {
-    l_node->name = tokens[count].text;
-    advance();
-  }
-
-  const token &peek() const { return tokens[count]; }
-
-public:
-  explicit parser(const std::vector<token> &input) : tokens(input) {};
-
-  void parse_function(function_node &node) {
-    advance();          // Consume FN
-    consume_name(node); // Consume NAME
-    advance();          // Consume LPAR
-
-    while (tokens[count].type != token_type::R_PAREN) {
-      node.parameters.push_back(consume_type_identifier());
-      advance();
-      if (peek().type == token_type::COMMA) {
-        advance();
-      }
-    }
-
-    advance();
-    while (tokens[count].type != token_type::R_BRACKET) {
-      if (tokens[count].type == token_type::LET) {
-      }
-      if (tokens[count].type == token_type::RELEASE) {
-      }
-    }
-  }
-
-  std::unique_ptr<ast_node> parse_let() {
-    advance(); // Consume LET
-    auto node = std::make_unique<let_node>();
-    consume_name(node); // Consume Name
-    advance();          // Consume Equal
-
-    return node;
-  }
-};
 } // namespace eclaire
+
 #endif

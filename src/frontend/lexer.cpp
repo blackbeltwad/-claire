@@ -13,7 +13,9 @@ namespace {
 const std::unordered_map<std::string, token_type> keywords = {
     {"fn", token_type::FN},         {"spell", token_type::SPELL},
     {"invoke", token_type::INVOKE}, {"release", token_type::RELEASE},
-    {"let", token_type::LET},       {"int", token_type::TYPE},
+    {"let", token_type::LET},       {"if", token_type::IF},
+    {"elif", token_type::ELIF},     {"else", token_type::ELSE},
+    {"while", token_type::WHILE},   {"int", token_type::TYPE},
     {"string", token_type::TYPE}};
 
 bool is_whitespace(char character) {
@@ -187,6 +189,14 @@ const char *token_type_to_string(token_type type) {
     return "QUOTE";
   case token_type::NEWLINE:
     return "NEWLINE";
+  case token_type::IF:
+    return "IF";
+  case token_type::ELIF:
+    return "ELIF";
+  case token_type::ELSE:
+    return "ELSE";
+  case token_type::WHILE:
+    return "WHILE";
   }
 
   return "UNKNOWN";
