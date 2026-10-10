@@ -40,6 +40,7 @@ bool is_opening_delimiter(char character) {
   return character == '(' || character == '{' || character == '[';
 }
 
+bool is_new_line(char character) { return character == '\n'; }
 bool is_closing_delimiter(char character) {
   return character == ')' || character == '}' || character == ']';
 }
@@ -134,6 +135,9 @@ bool emit_punctuation(char character, std::vector<token> &tokens) {
   case '=':
     tokens.push_back({token_type::EQUAL, "="});
     return true;
+  case '\n':
+    tokens.push_back({token_type::NEWLINE, " "});
+    return true;
   default:
     return false;
   }
@@ -181,6 +185,8 @@ const char *token_type_to_string(token_type type) {
     return "OPERATOR";
   case token_type::QUOTE:
     return "QUOTE";
+  case token_type::NEWLINE:
+    return "NEWLINE";
   }
 
   return "UNKNOWN";
@@ -222,6 +228,13 @@ bool tokenize(const std::string &source, std::vector<token> &tokens) {
       buffer.clear();
       tokens.push_back({token_type::QUOTE, "`"});
       in_string = true;
+    } else if (is_new_line(current)) {
+      if (!emit_word(buffer, tokens)) {
+        return false;
+      }
+
+      buffer.clear();
+      emit_punctuation(current, tokens);
     } else if (is_whitespace(current)) {
       if (!emit_word(buffer, tokens)) {
         return false;
@@ -286,6 +299,9 @@ bool tokenize(const std::string &source, std::vector<token> &tokens) {
     return false;
   }
 
+  for (const auto &x : tokens) {
+    std::cout << x << '\n';
+  }
   return true;
 }
 

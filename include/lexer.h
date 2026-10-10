@@ -26,7 +26,8 @@ enum class token_type {
   R_BRACKET,
   EQUAL,
   OPERATOR,
-  QUOTE
+  QUOTE,
+  NEWLINE
 };
 
 struct token {
