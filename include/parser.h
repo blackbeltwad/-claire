@@ -119,6 +119,9 @@ struct function_node : ast_node {
   bool is_spell = false;
 };
 
-} // namespace eclaire
+struct program {
+  std::vector<std::unique_ptr<function_node>> functions;
+};
 
+} // namespace eclaire
 #endif

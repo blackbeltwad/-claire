@@ -10,7 +10,7 @@ spell do() {
 fn main(){
   let x = 4
   let b = 10
-  if (x > b){
+  if (x >= b){
     x = x + 5
   }  
   let done = x + b + name(2,3)

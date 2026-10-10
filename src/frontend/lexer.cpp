@@ -1,4 +1,3 @@
-
 #include "lexer.h"
 
 #include <cctype>
@@ -43,6 +42,7 @@ bool is_opening_delimiter(char character) {
 }
 
 bool is_new_line(char character) { return character == '\n'; }
+
 bool is_closing_delimiter(char character) {
   return character == ')' || character == '}' || character == ']';
 }
@@ -69,6 +69,10 @@ bool is_operator(char character) {
   default:
     return false;
   }
+}
+
+bool next_is_equal(const std::string &source, std::size_t i) {
+  return i + 1 < source.size() && source[i + 1] == '=';
 }
 
 bool emit_word(const std::string &word, std::vector<token> &tokens) {
@@ -275,7 +279,20 @@ bool tokenize(const std::string &source, std::vector<token> &tokens) {
 
       delimiters.pop();
       emit_punctuation(current, tokens);
-    } else if (current == ',' || current == '=') {
+    } else if (current == '=') {
+      if (!emit_word(buffer, tokens)) {
+        return false;
+      }
+
+      buffer.clear();
+
+      if (next_is_equal(source, i)) {
+        tokens.push_back({token_type::OPERATOR, "=="});
+        ++i;
+      } else {
+        emit_punctuation(current, tokens);
+      }
+    } else if (current == ',') {
       if (!emit_word(buffer, tokens)) {
         return false;
       }
@@ -288,7 +305,15 @@ bool tokenize(const std::string &source, std::vector<token> &tokens) {
       }
 
       buffer.clear();
-      tokens.push_back({token_type::OPERATOR, std::string(1, current)});
+
+      std::string text(1, current);
+      if ((current == '<' || current == '>' || current == '!') &&
+          next_is_equal(source, i)) {
+        text += '=';
+        ++i;
+      }
+
+      tokens.push_back({token_type::OPERATOR, text});
     } else {
       std::cerr << "Error: unexpected character: " << current << '\n';
       return false;
