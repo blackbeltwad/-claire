@@ -1,0 +1,33 @@
+f !name(u32 %a, u32 %b) -> u32 {
+enter:
+  %ans = %a add %b
+  ret %ans
+}
+
+s !name() -> u32 {
+enter:
+  %0 = const u32 1124
+  %1 = const u32 123
+  ret %0 mul %123
+}
+
+f !main() -> void {
+enter:
+  %x = const u32 4
+  %b = const u32 10
+  %cond = icmp sge u32 %x, %b
+  br %cond, if_body, if_exit
+
+if_body:
+  %x1 = add u32 %x, 5
+  br if_exit
+
+if_exit:
+  %x2 = phi u32 [ %x1, if_body ], [ %x, enter ]
+  %done1 = call u32 @name(2, 3)
+  %done2 = add u32 %x2, %b
+  %done = add u32 %done2, %done1
+  %z = call u32 @do()
+  ret void
+}
+
