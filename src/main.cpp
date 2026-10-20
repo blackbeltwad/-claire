@@ -32,5 +32,5 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  eclaire::program ast = eclaire::parse(tokens);
+  eclaire::parser::program ast = eclaire::parse(tokens);
 }

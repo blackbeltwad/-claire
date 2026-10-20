@@ -4,7 +4,7 @@ fn name(int x, int y){
 }
 
 spell do() {
-  release 120320402105  * 10938018503
+  return 1124 * 123
 }
 
 fn main(){
@@ -16,6 +16,7 @@ fn main(){
   let done = x + b + name(2,3)
 
   let z = invoke do()
+
 }
 
 

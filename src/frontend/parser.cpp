@@ -5,6 +5,7 @@
 #include <iostream>
 
 namespace eclaire {
+namespace parser {
 namespace {
 
 [[noreturn]] void error(const std::string &msg) {
@@ -285,10 +286,10 @@ private:
 };
 
 } // namespace
-
-program parse(const std::vector<token> &tokens) {
-  program root;
-  parser p(tokens);
+} // namespace parser
+eclaire::parser::program parse(const std::vector<token> &tokens) {
+  eclaire::parser::program root;
+  eclaire::parser::parser p(tokens);
   p.parse(root);
   return root;
 }

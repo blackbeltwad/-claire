@@ -6,7 +6,7 @@
 #include <vector>
 
 namespace eclaire {
-
+namespace parser {
 enum class kind {
   integer,
   variable,
@@ -122,6 +122,6 @@ struct function_node : ast_node {
 struct program {
   std::vector<std::unique_ptr<function_node>> functions;
 };
-
+} // namespace parser
 } // namespace eclaire
 #endif

@@ -43,7 +43,6 @@ Planned features include:
 * Structs and arrays
 * Pointers and pointer arithmetic
 * Manual memory management
-* Generics
 * Compile-time evaluation
 * Modules
 * Useful compiler diagnostics

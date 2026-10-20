@@ -10,6 +10,7 @@ add_executable(claire
   src/main.cpp
   src/frontend/lexer.cpp
   src/frontend/parser.cpp
+  src/middle-end/intermediate.cpp
 )
 
 target_include_directories(claire PRIVATE include)

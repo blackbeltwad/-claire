@@ -1,0 +1,5 @@
+fn name(int x, int y){
+  let ans = x + y
+  release ans
+}
+

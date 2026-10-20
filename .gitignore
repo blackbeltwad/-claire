@@ -30,3 +30,5 @@ compile_commands.json
 # macOS
 .DS_Store
 
+# myfile
+p.txt

@@ -1,0 +1,9 @@
+fn main(){
+  let x = 82937
+  let y = 9120941
+
+  let z = "helloooo americuhh"
+
+  let j = x + y
+  release j
+}

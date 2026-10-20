@@ -1,0 +1,51 @@
+Program
+└── Function
+    ├── name
+    ├── parameters
+    ├── is_spell
+    └── body: Block
+        └── Statements
+            ├── Let
+            │   ├── name
+            │   └── value: Expression
+            │
+            ├── Assign
+            │   ├── name
+            │   └── value: Expression
+            │
+            ├── Release
+            │   └── value: Expression
+            │
+            ├── ExpressionStatement
+            │   └── value: Expression
+            │
+            ├── If
+            │   ├── Branches
+            │   │   └── Branch
+            │   │       ├── condition: Expression
+            │   │       └── body: Block
+            │   └── else_body: Block
+            │
+            └── While
+                ├── condition: Expression
+                └── body: Block
+
+
+Expression
+├── Integer
+│   └── value
+│
+├── Variable
+│   └── name
+│
+├── Binary
+│   ├── operator
+│   ├── left: Expression
+│   └── right: Expression
+│
+├── Call
+│   ├── name
+│   └── arguments: List<Expression>
+│
+└── Invoke
+    └── call: Call

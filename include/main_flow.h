@@ -5,6 +5,6 @@
 #include <string>
 namespace eclaire {
 bool tokenize(const std::string &source, std::vector<token> &tokens);
-program parse(const std::vector<token> &tokens);
+eclaire::parser::program parse(const std::vector<token> &tokens);
 } // namespace eclaire
 #endif
