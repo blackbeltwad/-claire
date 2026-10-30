@@ -2,7 +2,7 @@
 #include "main_flow.h"
 #include <fstream>
 #include <iostream>
-
+using namespace eclaire::lexer;
 int main(int argc, char *argv[]) {
 
   if (argc != 2) {
@@ -26,8 +26,8 @@ int main(int argc, char *argv[]) {
   }
 
   std::cout << source;
-  std::vector<eclaire::token> tokens;
-  if (!eclaire::tokenize(source, tokens)) {
+  std::vector<token> tokens;
+  if (!tokenize(source, tokens)) {
     std::cerr << "Error: tokenization has failed \n";
     return 1;
   }

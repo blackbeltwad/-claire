@@ -1,11 +1,12 @@
 #ifndef ECLAIRE_LEXER_H
 #define ECLAIRE_LEXER_H
 
+#include "source_loc.h"
 #include <iosfwd>
 #include <string>
 #include <vector>
 
-namespace eclaire {
+namespace eclaire::lexer {
 
 enum class token_type {
   FN,
@@ -37,6 +38,7 @@ enum class token_type {
 struct token {
   token_type type;
   std::string text;
+  loc location; // position of the token's first character
 };
 
 const char *token_type_to_string(token_type type);
@@ -44,6 +46,6 @@ std::ostream &operator<<(std::ostream &os, const token &current_token);
 
 bool tokenize(const std::string &source, std::vector<token> &tokens);
 
-} // namespace eclaire
+} // namespace eclaire::lexer
 
 #endif

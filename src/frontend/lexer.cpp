@@ -6,7 +6,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace eclaire {
+namespace eclaire::lexer {
 namespace {
 
 const std::unordered_map<std::string, token_type> keywords = {
@@ -75,7 +75,18 @@ bool next_is_equal(const std::string &source, std::size_t i) {
   return i + 1 < source.size() && source[i + 1] == '=';
 }
 
-bool emit_word(const std::string &word, std::vector<token> &tokens) {
+// Prints Error: row:col: so every diagnostic has a position.
+std::ostream &error_at(loc where) {
+  return std::cerr << "Error: " << where.row << ':' << where.col << ": ";
+}
+
+struct open_delimiter {
+  char character;
+  loc location;
+};
+
+// where is the position of the word's first character.
+bool emit_word(const std::string &word, loc where, std::vector<token> &tokens) {
   if (word.empty()) {
     return true;
   }
@@ -83,66 +94,66 @@ bool emit_word(const std::string &word, std::vector<token> &tokens) {
   const auto keyword = keywords.find(word);
 
   if (keyword != keywords.end()) {
-    tokens.push_back({keyword->second, word});
+    tokens.push_back({keyword->second, word, where});
     return true;
   }
 
   if (is_digit(word.front())) {
     for (char character : word) {
       if (!is_digit(character)) {
-        std::cerr << "Error: invalid integer literal: " << word << '\n';
+        error_at(where) << "invalid integer literal: " << word << '\n';
         return false;
       }
     }
 
-    tokens.push_back({token_type::INTEGER, word});
+    tokens.push_back({token_type::INTEGER, word, where});
     return true;
   }
 
   if (!is_identifier_start(word.front())) {
-    std::cerr << "Error: invalid token: " << word << '\n';
+    error_at(where) << "invalid token: " << word << '\n';
     return false;
   }
 
   for (char character : word) {
     if (!is_identifier_character(character)) {
-      std::cerr << "Error: invalid identifier: " << word << '\n';
+      error_at(where) << "invalid identifier: " << word << '\n';
       return false;
     }
   }
 
-  tokens.push_back({token_type::IDENTIFIER, word});
+  tokens.push_back({token_type::IDENTIFIER, word, where});
   return true;
 }
 
-bool emit_punctuation(char character, std::vector<token> &tokens) {
+bool emit_punctuation(char character, loc where, std::vector<token> &tokens) {
   switch (character) {
   case ',':
-    tokens.push_back({token_type::COMMA, ","});
+    tokens.push_back({token_type::COMMA, ",", where});
     return true;
   case '(':
-    tokens.push_back({token_type::L_PAREN, "("});
+    tokens.push_back({token_type::L_PAREN, "(", where});
     return true;
   case ')':
-    tokens.push_back({token_type::R_PAREN, ")"});
+    tokens.push_back({token_type::R_PAREN, ")", where});
     return true;
   case '{':
-    tokens.push_back({token_type::L_BRACE, "{"});
+    tokens.push_back({token_type::L_BRACE, "{", where});
     return true;
   case '}':
-    tokens.push_back({token_type::R_BRACE, "}"});
+    tokens.push_back({token_type::R_BRACE, "}", where});
     return true;
   case '[':
-    tokens.push_back({token_type::L_BRACKET, "["});
+    tokens.push_back({token_type::L_BRACKET, "[", where});
     return true;
   case ']':
-    tokens.push_back({token_type::R_BRACKET, "]"});
+    tokens.push_back({token_type::R_BRACKET, "]", where});
     return true;
   case '=':
-    tokens.push_back({token_type::EQUAL, "="});
+    tokens.push_back({token_type::EQUAL, "=", where});
     return true;
   case '\n':
-    tokens.push_back({token_type::NEWLINE, " "});
+    tokens.push_back({token_type::NEWLINE, " ", where});
     return true;
   default:
     return false;
@@ -208,129 +219,153 @@ const char *token_type_to_string(token_type type) {
 
 std::ostream &operator<<(std::ostream &os, const token &current_token) {
   return os << '{' << token_type_to_string(current_token.type) << ": \""
-            << current_token.text << "\"}";
+            << current_token.text << "\" @" << current_token.location.row << ':'
+            << current_token.location.col << '}';
 }
 
 bool tokenize(const std::string &source, std::vector<token> &tokens) {
   tokens.clear();
 
   std::string buffer;
-  std::stack<char> delimiters;
+  loc buffer_loc; // where the word currently in buffer started
+  loc string_loc; // where the current string literal content started
+  std::stack<open_delimiter> delimiters;
   bool in_string = false;
 
-  for (std::size_t i = 0; i < source.size(); ++i) {
+  // Position of source[i]. Only step() changes it, so row/col can't drift.
+  std::size_t i = 0;
+  loc here{1, 1};
+
+  auto step = [&]() {
+    if (source[i] == '\n') {
+      ++here.row;
+      here.col = 1;
+    } else {
+      ++here.col;
+    }
+    ++i;
+  };
+
+  // Flush the pending word before a delimiter/operator/etc.
+  auto flush = [&]() {
+    const bool ok = emit_word(buffer, buffer_loc, tokens);
+    buffer.clear();
+    return ok;
+  };
+
+  while (i < source.size()) {
     const char current = source[i];
 
     if (in_string) {
       if (current == '`') {
-        tokens.push_back({token_type::STRING, buffer});
-        tokens.push_back({token_type::QUOTE, "`"});
+        tokens.push_back({token_type::STRING, buffer, string_loc});
+        tokens.push_back({token_type::QUOTE, "`", here});
         buffer.clear();
         in_string = false;
       } else {
         buffer += current;
       }
 
+      step();
       continue;
     }
 
     if (current == '`') {
-      if (!emit_word(buffer, tokens)) {
+      if (!flush()) {
         return false;
       }
 
-      buffer.clear();
-      tokens.push_back({token_type::QUOTE, "`"});
+      tokens.push_back({token_type::QUOTE, "`", here});
       in_string = true;
+      string_loc = {here.row, here.col + 1};
     } else if (is_new_line(current)) {
-      if (!emit_word(buffer, tokens)) {
+      if (!flush()) {
         return false;
       }
 
-      buffer.clear();
-      emit_punctuation(current, tokens);
+      emit_punctuation(current, here, tokens);
     } else if (is_whitespace(current)) {
-      if (!emit_word(buffer, tokens)) {
+      if (!flush()) {
         return false;
       }
-
-      buffer.clear();
     } else if (is_identifier_character(current)) {
+      if (buffer.empty()) {
+        buffer_loc = here;
+      }
       buffer += current;
     } else if (is_opening_delimiter(current)) {
-      if (!emit_word(buffer, tokens)) {
+      if (!flush()) {
         return false;
       }
 
-      buffer.clear();
-      delimiters.push(current);
-      emit_punctuation(current, tokens);
+      delimiters.push({current, here});
+      emit_punctuation(current, here, tokens);
     } else if (is_closing_delimiter(current)) {
-      if (!emit_word(buffer, tokens)) {
+      if (!flush()) {
         return false;
       }
 
-      buffer.clear();
-
-      if (delimiters.empty() || !delimiters_match(delimiters.top(), current)) {
-        std::cerr << "Error: mismatched closing delimiter: " << current << '\n';
+      if (delimiters.empty() ||
+          !delimiters_match(delimiters.top().character, current)) {
+        error_at(here) << "mismatched closing delimiter: " << current << '\n';
         return false;
       }
 
       delimiters.pop();
-      emit_punctuation(current, tokens);
+      emit_punctuation(current, here, tokens);
     } else if (current == '=') {
-      if (!emit_word(buffer, tokens)) {
+      if (!flush()) {
         return false;
       }
-
-      buffer.clear();
 
       if (next_is_equal(source, i)) {
-        tokens.push_back({token_type::OPERATOR, "=="});
-        ++i;
+        tokens.push_back({token_type::OPERATOR, "==", here});
+        step(); // consume the first '='; the loop-end step() eats the second
       } else {
-        emit_punctuation(current, tokens);
+        emit_punctuation(current, here, tokens);
       }
     } else if (current == ',') {
-      if (!emit_word(buffer, tokens)) {
+      if (!flush()) {
         return false;
       }
 
-      buffer.clear();
-      emit_punctuation(current, tokens);
+      emit_punctuation(current, here, tokens);
     } else if (is_operator(current)) {
-      if (!emit_word(buffer, tokens)) {
+      if (!flush()) {
         return false;
       }
 
-      buffer.clear();
-
+      const loc start = here;
       std::string text(1, current);
       if ((current == '<' || current == '>' || current == '!') &&
           next_is_equal(source, i)) {
         text += '=';
-        ++i;
+        step();
       }
 
-      tokens.push_back({token_type::OPERATOR, text});
+      tokens.push_back({token_type::OPERATOR, text, start});
     } else {
-      std::cerr << "Error: unexpected character: " << current << '\n';
+      error_at(here) << "unexpected character: " << current << '\n';
       return false;
     }
+
+    step();
   }
 
   if (in_string) {
-    std::cerr << "Error: unterminated string literal\n";
+    // Point at the opening quote (one column before the content start).
+    error_at({string_loc.row, string_loc.col - 1})
+        << "unterminated string literal\n";
     return false;
   }
 
-  if (!emit_word(buffer, tokens)) {
+  if (!flush()) {
     return false;
   }
 
   if (!delimiters.empty()) {
-    std::cerr << "Error: missing closing delimiter\n";
+    error_at(delimiters.top().location)
+        << "unclosed delimiter: " << delimiters.top().character << '\n';
     return false;
   }
 
@@ -340,4 +375,4 @@ bool tokenize(const std::string &source, std::vector<token> &tokens) {
   return true;
 }
 
-} // namespace eclaire
+} // namespace eclaire::lexer
