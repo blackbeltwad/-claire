@@ -31,6 +31,4 @@ int main(int argc, char *argv[]) {
     std::cerr << "Error: tokenization has failed \n";
     return 1;
   }
-
-  eclaire::parser::program ast = eclaire::parse(tokens);
 }

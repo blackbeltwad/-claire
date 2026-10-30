@@ -1,5 +1,16 @@
+fn main(){
+  let a = 5
+  let z = 4
+
+  a = 3
+  z = 2
+  let c = name(a,z)
+  release c
+}
+
 fn name(int x, int y){
   let ans = x + y
+
   release ans
 }
 
