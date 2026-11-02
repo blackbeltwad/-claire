@@ -3,6 +3,7 @@
 
 #include "source_loc.h"
 #include <iosfwd>
+#include <iostream>
 #include <string>
 #include <vector>
 

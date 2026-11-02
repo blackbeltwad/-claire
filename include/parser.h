@@ -118,6 +118,8 @@ struct fn {
   std::vector<stmt> body;
   bool is_spell = false; // declared with spell is compile time function
   loc location;
+  fn(std::string _name, bool _b, loc _source)
+      : name(_name), is_spell(_b), location(_source) {}
 };
 
 struct program {

@@ -5,8 +5,12 @@
 #include <sys/wait.h>
 namespace eclaire::parser {
 namespace {
+using lexer::token;
 using lexer::token_type;
-void crash() { std::terminate(); }
+void crash() {
+  // For now i have no clue what is better to say here tbh
+  std::terminate();
+}
 
 std::ostream &error_at(loc source) {
   return std::cout << "At" << source.row << ":" << source.col;
@@ -131,9 +135,55 @@ private:
     return token_type();
   }
 
+  token_type current_token_type() { return _tokens[index].type; }
+  token current_token() { return _tokens[index]; }
+
   // --------------- internal logic -------------------------------------
 
-  fn parse_function(program &root) {}
+  fn parse_function(program &root) {
+    bool is_spell = false;
+    if (current_token_type() == token_type::SPELL) {
+      is_spell = true;
+    }
+    expect(token_type::IDENTIFIER);
+    token fn_token = current_token();
+
+    fn func(fn_token.text, is_spell,
+            fn_token.location); // build this throughout
+
+    expect(token_type::L_PAREN);
+
+    while (current_token_type() != token_type::R_PAREN) {
+      if (check_next() == token_type::R_PAREN) {
+        expect(token_type::R_PAREN);
+      }
+
+      variable param;
+      expect(token_type::TYPE);
+      token param_type = current_token();
+
+      // this will upgrade to a switch statement eventually
+      if (param_type.text == "int") {
+        param._type = type::int_32;
+      }
+
+      expect(token_type::IDENTIFIER);
+      token param_name = current_token();
+      param.name = param_name.text;
+      param.location = param_name.location;
+
+      func.parameters.push_back(std::move(param));
+
+      if (check_next() == token_type::R_PAREN) {
+        expect(token_type::R_PAREN);
+      }
+      expect(token_type::COMMA);
+    }
+
+    // parse statements time
+    expect(token_type::L_BRACE);
+    return std::move(func);
+  }
 
 public:
   parser(const std::vector<lexer::token> &tokens) {
