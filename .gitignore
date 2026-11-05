@@ -32,3 +32,13 @@ compile_commands.json
 
 # myfile
 p.txt
+
+build/
+cmake-build-*/
+.cache/
+compile_commands.json
+.vscode/
+.idea/
+.DS_Store
+*.o
+*.a

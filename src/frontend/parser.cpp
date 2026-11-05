@@ -140,6 +140,33 @@ private:
 
   // --------------- internal logic -------------------------------------
 
+  stmt parse_let() {
+    expect(token_type::IDENTIFIER);
+    // a hash_map here add it
+    expect(token_type::EQUAL);
+    // parse expression()
+    // return this statement
+  }
+
+  stmt parse_release() {}
+  stmt parse_stmts() {
+    move_forward();
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wswitch"
+
+    switch (current_token_type()) {
+
+    case token_type::LET:
+      break;
+    case token_type::IDENTIFIER:
+      break;
+    case token_type::RELEASE:
+      break;
+    }
+
+#pragma clang diagnostic pop
+  }
+
   fn parse_function(program &root) {
     bool is_spell = false;
     if (current_token_type() == token_type::SPELL) {
@@ -182,6 +209,10 @@ private:
 
     // parse statements time
     expect(token_type::L_BRACE);
+    while (current_token_type() != token_type::R_BRACE) {
+      func.body.push_back(parse_stmts());
+    }
+
     return std::move(func);
   }
 
