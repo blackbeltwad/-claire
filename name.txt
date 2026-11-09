@@ -4,6 +4,9 @@ fn main(){
 
   a = 3
   z = 2
+  if (a <= z){
+
+  }
   let c = name(a,z)
   release c
 }
