@@ -2,8 +2,11 @@
 #include "lexer.h"
 #include <exception>
 #include <iostream>
+#include <memory>
+#include <string>
 #include <utility>
 #include <vector>
+
 namespace eclaire::parser {
 namespace {
 using lexer::token;
@@ -203,11 +206,105 @@ private:
 
   // --------------- internal logic -------------------------------------
 
-  // TODO: paste the precedence-climbing parse_expression (and its helpers)
-  // here.
-  expr_p parse_expression() {
-    error_at(_tokens[index].location) << "parse_expression not implemented\n";
-    crash();
+  // primary := INTEGER | IDENT | IDENT '(' [expr {',' expr}] ')' | '(' expr ')'
+  expr_p parse_primary() {
+    const token *t = peek();
+    if (t == nullptr) {
+      unexpected_end();
+    }
+
+    switch (t->type) {
+    case token_type::INTEGER: {
+      move_forward();
+      token tok = current_token();
+      auto node = std::make_unique<expr_nry>();
+      node->_kind = kind::Num;
+      node->location = tok.location;
+      node->value = std::stoll(tok.text);
+      return node;
+    }
+    case token_type::IDENTIFIER: {
+      move_forward();
+      token tok = current_token();
+      auto node = std::make_unique<expr_nry>();
+      node->location = tok.location;
+      node->name = tok.text;
+
+      if (check_next() == token_type::L_PAREN) {
+        move_forward(); // '('
+        node->_kind = kind::Call;
+        if (check_next() != token_type::R_PAREN) {
+          while (true) {
+            node->operands.push_back(parse_expression());
+            if (check_next() == token_type::COMMA) {
+              move_forward();
+              continue;
+            }
+            break;
+          }
+        }
+        expect(token_type::R_PAREN);
+      } else {
+        node->_kind = kind::Var;
+      }
+      return node;
+    }
+    case token_type::L_PAREN: {
+      move_forward();
+      expr_p inner = parse_expression();
+      expect(token_type::R_PAREN);
+      return inner;
+    }
+    default:
+      error_at(t->location) << "expected expression, got '" << t->type << "'\n";
+      crash();
+    }
+  }
+
+  // unary := ('-' | '!') unary | primary
+  expr_p parse_unary() {
+    const token *t = peek();
+    if (t && t->type == token_type::OPERATOR &&
+        (t->text == "-" || t->text == "!")) {
+      move_forward();
+      token op = current_token();
+      auto node = std::make_unique<expr_nry>();
+      node->_kind = (op.text == "-") ? kind::Neg : kind::Not;
+      node->location = op.location;
+      node->operands.push_back(parse_unary());
+      return node;
+    }
+    return parse_primary();
+  }
+
+  // Precedence climbing, all binary operators left associative.
+  expr_p parse_expression(int min_prec = 1) {
+    expr_p lhs = parse_unary();
+
+    while (true) {
+      const token *t = peek();
+      if (t == nullptr || t->type != token_type::OPERATOR) {
+        break;
+      }
+
+      const int prec = binary_precedence(t->text);
+      if (prec < min_prec) {
+        break;
+      }
+
+      move_forward();
+      token op = current_token();
+      expr_p rhs = parse_expression(prec + 1);
+
+      auto node = std::make_unique<expr_nry>();
+      node->_kind = binary_kind(op.text);
+      node->location = op.location;
+      node->operands.push_back(std::move(lhs));
+      node->operands.push_back(std::move(rhs));
+      lhs = std::move(node);
+    }
+
+    return lhs;
   }
 
   stmt parse_let() {
@@ -218,7 +315,7 @@ private:
     let_stmt s;
     s.var.name = name.text;
     s.var.location = name.location;
-    s.var._type = type::int_32; // TODO: infer / annotate
+    s.var._type = type::int_32; // TODO: infer/etc
     s.expression = parse_expression();
     return stmt{std::move(s)};
   }
