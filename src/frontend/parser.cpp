@@ -4,6 +4,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -20,6 +21,12 @@ using lexer::token_type;
 // Same "Error: row:col: " format as the lexer, and on stderr.
 std::ostream &error_at(loc source) {
   return std::cerr << "Error: " << source.row << ':' << source.col << ": ";
+}
+
+std::string error_at_without(loc source) {
+  std::string my_string =
+      std::to_string(source.row) + " : " + std::to_string(source.col);
+  return my_string;
 }
 
 std::ostream &operator<<(std::ostream &os, token_type token) {
@@ -108,7 +115,7 @@ private:
   std::vector<lexer::token> _tokens;
   // Convention: index is the CURRENT / LAST CONSUMED token.
   std::size_t index = 0;
-
+  std::unordered_map<std::string, loc> var_lookup;
   //--------------- helper functions -----------------------
 
   // Next token without consuming it
@@ -311,7 +318,13 @@ private:
     expect(token_type::IDENTIFIER);
     token name = current_token();
     expect(token_type::EQUAL);
-
+    if (!var_lookup.contains(name.text)) {
+      var_lookup.try_emplace(name.text, name.location);
+    } else {
+      error_at(name.location)
+          << "variable " << name.text << " already defined at " << " "
+          << error_at_without(var_lookup[name.text]);
+    }
     let_stmt s;
     s.var.name = name.text;
     s.var.location = name.location;

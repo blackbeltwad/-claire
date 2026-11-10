@@ -1,6 +1,7 @@
 #ifndef ECLAIRE_PARSER_H
 #define ECLAIRE_PARSER_H
 
+#include "lexer.h"
 #include "source_loc.h"
 #include <cstdint>
 #include <memory>
@@ -8,7 +9,6 @@
 #include <string>
 #include <variant>
 #include <vector>
-
 namespace eclaire::parser {
 
 // ---------- Expressions ----------
@@ -125,6 +125,8 @@ struct fn {
 struct program {
   std::vector<fn> functions;
 };
+
+program parse_to_ast(const std::vector<lexer::token> &tokens);
 
 } // namespace eclaire::parser
 
