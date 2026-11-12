@@ -16,3 +16,7 @@ gtest_discover_tests(smoke_tests)
 add_executable(parser_tests parser_tests.cpp)
 target_link_libraries(parser_tests PRIVATE compiler_lib GTest::gtest_main)
 gtest_discover_tests(parser_tests)
+
+add_executable(lexer_tests lexer_tests.cpp)
+target_link_libraries(lexer_tests PRIVATE compiler_lib GTest::gtest_main)
+gtest_discover_tests(lexer_tests)
