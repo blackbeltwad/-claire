@@ -57,13 +57,13 @@ struct expr_nry {
 struct let_stmt;
 struct assign_stmt;
 struct release_stmt;
-struct expr_stmt;
+struct call_stmt;
 struct if_stmt;
 struct while_stmt;
 
 // One statement type for everything. Function, if and while bodies
 // are all just std::vector<stmt>.
-using stmt = std::variant<let_stmt, assign_stmt, release_stmt, expr_stmt,
+using stmt = std::variant<let_stmt, assign_stmt, release_stmt, call_stmt,
                           if_stmt, while_stmt>;
 
 struct variable {
@@ -83,12 +83,15 @@ struct assign_stmt {
   loc location;
 };
 
+// my languages return just to be different
 struct release_stmt {
   expr_p expression;
   loc location;
 };
 
-struct expr_stmt {
+// For pure expressions like just a function call
+struct call_stmt {
+  std::string name;
   expr_p expression;
   loc location;
 };

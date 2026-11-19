@@ -115,7 +115,9 @@ private:
   std::vector<lexer::token> _tokens;
   // Convention: index is the CURRENT / LAST CONSUMED token.
   std::size_t index = 0;
-  std::unordered_map<std::string, loc> var_lookup;
+  std::unordered_map<std::string, loc>
+      var_lookup; // im gonna check for proper let assign use in another like
+                  // pass this file is too large
   //--------------- helper functions -----------------------
 
   // Next token without consuming it
@@ -318,13 +320,7 @@ private:
     expect(token_type::IDENTIFIER);
     token name = current_token();
     expect(token_type::EQUAL);
-    if (!var_lookup.contains(name.text)) {
-      var_lookup.try_emplace(name.text, name.location);
-    } else {
-      error_at(name.location)
-          << "variable " << name.text << " already defined at " << " "
-          << error_at_without(var_lookup[name.text]);
-    }
+
     let_stmt s;
     s.var.name = name.text;
     s.var.location = name.location;
@@ -333,6 +329,76 @@ private:
     return stmt{std::move(s)};
   }
 
+  stmt parse_if() {
+    token if_tok = current_token(); // index is on IF
+
+    if_stmt s;
+    s.location = if_tok.location;
+
+    // first branch: if (cond) { ... }
+    if_stmt::branch first;
+    expect(token_type::L_PAREN);
+    first.condition = parse_expression();
+    expect(token_type::R_PAREN);
+    first.body = parse_block();
+    s.branches.push_back(std::move(first));
+
+    // elif branches
+    while (check_next() == token_type::ELIF) {
+      move_forward();
+      if_stmt::branch b;
+      expect(token_type::L_PAREN);
+      b.condition = parse_expression();
+      expect(token_type::R_PAREN);
+      b.body = parse_block();
+      s.branches.push_back(std::move(b));
+    }
+
+    // optional else
+    if (check_next() == token_type::ELSE) {
+      move_forward();
+      s.else_body = parse_block();
+    }
+
+    return stmt{std::move(s)};
+  }
+  stmt parse_assign() {
+    token name = current_token();
+    expect(token_type::EQUAL);
+
+    assign_stmt s;
+    s.name = name.text;
+    s.location = name.location;
+    // type not sure will do correct type in another pass
+    s.expression = parse_expression();
+    return stmt{std::move(s)};
+  }
+
+  stmt parse_call() {
+    token name = current_token();
+    // parse_primary expects index on the token what it parses
+    // were already on the identifier token so move back
+    move_backward();
+    call_stmt s;
+    s.name = name.text;
+    s.location = name.location;
+    s.expression = parse_primary();
+    return stmt{std::move(s)};
+  }
+
+  stmt parse_identifier() {
+    switch (check_next()) {
+    case token_type::EQUAL:
+      return parse_assign();
+    case token_type::L_PAREN:
+      return parse_call();
+    default:
+      error_at(current_token().location)
+          << "expected '=' or '(' after identifier '" << current_token().text
+          << "'\n";
+      crash();
+    }
+  }
   // Called with index on the token BEFORE the statement.
   stmt parse_stmts() {
     move_forward();
@@ -340,12 +406,39 @@ private:
     switch (current_token_type()) {
     case token_type::LET:
       return parse_let();
+    case token_type::IF:
+      return parse_if();
+    case token_type::IDENTIFIER:
+      return parse_identifier();
     default:
       error_at(current_token().location)
           << "unexpected token '" << current_token_type()
           << "' at start of statement\n";
       crash();
     }
+  }
+
+  std::vector<stmt> parse_block() {
+    std::vector<stmt> body;
+    while (current_token_type() != token_type::R_BRACE) {
+      move_forward();
+
+      switch (current_token_type()) {
+      case token_type::LET:
+        body.push_back(parse_let());
+      case token_type::IF:
+        body.push_back(parse_if());
+      case token_type::IDENTIFIER:
+        body.push_back(parse_identifier());
+      default:
+        error_at(current_token().location)
+            << "unexpected token '" << current_token_type()
+            << "' at start of statement\n";
+        crash();
+      }
+    }
+
+    return body;
   }
 
   // Called with index on the FN / SPELL token. Returns with index on '}'.
