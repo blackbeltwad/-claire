@@ -341,6 +341,10 @@ bool tokenize(const std::string &source, std::vector<token> &tokens) {
           next_is_equal(source, i)) {
         text += '=';
         step();
+      } else if ((current == '&' || current == '|') && i + 1 < source.size() &&
+                 source[i + 1] == current) {
+        text += current; // "&&" / "||"; a lone '&' or '|' stays bitwise
+        step();
       }
 
       tokens.push_back({token_type::OPERATOR, text, start});
